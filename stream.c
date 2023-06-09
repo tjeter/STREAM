@@ -47,6 +47,17 @@
 # include <limits.h>
 # include <sys/time.h>
 
+/* Addition of Caliper and Variorum headers */
+# include <cali.h>
+# include <cali-manager.h>
+# include <cali_datatracker.h>
+//# include <Annotation.h>
+# include <cali-mpi.h>
+
+///*extern "C"{
+//# include <variorum.h>
+//}*/
+
 /*-----------------------------------------------------------------------
  * INSTRUCTIONS:
  *
@@ -264,12 +275,14 @@ main()
 #endif
 
     /* Get initial value for system clock. */
+    CALI_MARK_BEGIN("setup");
 #pragma omp parallel for
     for (j=0; j<STREAM_ARRAY_SIZE; j++) {
 	    a[j] = 1.0;
 	    b[j] = 2.0;
 	    c[j] = 0.0;
 	}
+    CALI_MARK_END("setup");
 
     printf(HLINE);
 
@@ -306,10 +319,18 @@ main()
     scalar = 3.0;
     for (k=0; k<NTIMES; k++)
 	{
+	CALI_MARK_BEGIN("copy");
+	cali_begin_string_byname("region.name", "copy");
 	times[0][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_ITERATION_BEGIN("copy-iteration", k);
         tuned_STREAM_Copy();
+	CALI_MARK_ITERATION_END("copy-iteration");
+	cali_end_byname("region.name");
+	CALI_MARK_END("copy");
 #else
+	CALI_MARK_BEGIN("scale");
+	cali_begin_string_byname("region.name", "scale");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j];
@@ -318,8 +339,14 @@ main()
 	
 	times[1][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_ITERATION_BEGIN("scale-iteration", k);
         tuned_STREAM_Scale(scalar);
+	CALI_MARK_ITERATION_END("scale-iteration");
+	cali_end_byname("region.name");
+	CALI_MARK_END("scale");
 #else
+	CALI_MARK_BEGIN("add");
+	cali_begin_string_byname("region.name", "add");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    b[j] = scalar*c[j];
@@ -328,8 +355,14 @@ main()
 	
 	times[2][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_ITERATION_BEGIN("add-iteration", k);
         tuned_STREAM_Add();
+	CALI_MARK_ITERATION_END("add-iteration");
+	cali_end_byname("region.name");
+	CALI_MARK_END("add");
 #else
+	CALI_MARK_BEGIN("triad");
+	cali_begin_string_byname("region.name", "triad");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j]+b[j];
@@ -338,7 +371,11 @@ main()
 	
 	times[3][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_ITERATION_BEGIN("triad-iteration", k);
         tuned_STREAM_Triad(scalar);
+	CALI_MARK_ITERATION_END("triad-iteraion");
+	cali_end_byname("region.name");
+	CALI_MARK_END("triad");
 #else
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
@@ -415,12 +452,13 @@ checktick()
 /* A gettimeofday routine to give access to the wall
    clock timer on most UNIX-like systems.  */
 
-#include <sys/time.h>
+//#include <sys/time.h>
 
 double mysecond()
 {
         struct timeval tp;
-        struct timezone tzp;
+        //struct timezone tzp;
+	int tzp;
         int i;
 
         i = gettimeofday(&tp,&tzp);
@@ -553,33 +591,49 @@ void checkSTREAMresults ()
 void tuned_STREAM_Copy()
 {
 	ssize_t j;
+	//CALI_MARK_BEGIN("copy");
+	//cali_begin_string_byname("region.name", "copy");
 #pragma omp parallel for
         for (j=0; j<STREAM_ARRAY_SIZE; j++)
             c[j] = a[j];
+	//cali_end_byname("region.name");
+	//CALI_MARK_END("copy");
 }
 
 void tuned_STREAM_Scale(STREAM_TYPE scalar)
 {
 	ssize_t j;
+	//CALI_MARK_BEGIN("scale");
+	//cali_begin_string_byname("region.name", "scale");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    b[j] = scalar*c[j];
+	//cali_end_byname("region.name");
+	//CALI_MARK_END("scale");
 }
 
 void tuned_STREAM_Add()
 {
 	ssize_t j;
+	//CALI_MARK_BEGIN("add");
+	//cali_begin_string_byname("region.name", "add");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j]+b[j];
+	//cali_end_byname("region.name");
+	//CALI_MARK_END("add");
 }
 
 void tuned_STREAM_Triad(STREAM_TYPE scalar)
 {
 	ssize_t j;
+	//CALI_MARK_BEGIN("triad");
+	//cali_begin_string_byname("region.name", "triad");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    a[j] = b[j]+scalar*c[j];
+	//cali_end_byname("region.name");
+	//CALI_MARK_END("triad");
 }
 /* end of stubs for the "tuned" versions of the kernels */
 #endif
