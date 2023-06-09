@@ -218,6 +218,7 @@ extern int omp_get_num_threads();
 int
 main()
     {
+    CALI_MARK_BEGIN("main");
     int			quantum, checktick();
     int			BytesPerWord;
     int			k;
@@ -411,10 +412,9 @@ main()
     /* --- Check Results --- */
     checkSTREAMresults();
     printf(HLINE);
-
+    CALI_MARK_END("main");
     return 0;
 }
-
 # define	M	20
 
 int
