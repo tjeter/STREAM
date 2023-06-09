@@ -319,67 +319,67 @@ main()
     scalar = 3.0;
     for (k=0; k<NTIMES; k++)
 	{
-	CALI_MARK_BEGIN("copy");
-	cali_begin_string_byname("region.name", "copy");
 	times[0][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_BEGIN("copy-if");
 	CALI_MARK_ITERATION_BEGIN("copy-iteration", k);
         tuned_STREAM_Copy();
 	CALI_MARK_ITERATION_END("copy-iteration");
-	cali_end_byname("region.name");
-	CALI_MARK_END("copy");
+	CALI_MARK_END("copy-if");
 #else
-	CALI_MARK_BEGIN("scale");
-	cali_begin_string_byname("region.name", "scale");
+	CALI_MARK_BEGIN("copy-else");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j];
+	CALI_MARK_END("copy-else");
 #endif
 	times[0][k] = mysecond() - times[0][k];
 	
 	times[1][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_BEGIN("scale-if");
 	CALI_MARK_ITERATION_BEGIN("scale-iteration", k);
         tuned_STREAM_Scale(scalar);
 	CALI_MARK_ITERATION_END("scale-iteration");
-	cali_end_byname("region.name");
-	CALI_MARK_END("scale");
+	CALI_MARK_END("scale-if");
 #else
-	CALI_MARK_BEGIN("add");
-	cali_begin_string_byname("region.name", "add");
+	CALI_MARK_BEGIN("scale-else");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    b[j] = scalar*c[j];
+	CALI_MARK_END("scale-else");
 #endif
 	times[1][k] = mysecond() - times[1][k];
 	
 	times[2][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_BEGIN("add-if");
 	CALI_MARK_ITERATION_BEGIN("add-iteration", k);
         tuned_STREAM_Add();
 	CALI_MARK_ITERATION_END("add-iteration");
-	cali_end_byname("region.name");
-	CALI_MARK_END("add");
+	CALI_MARK_END("add-if");
 #else
-	CALI_MARK_BEGIN("triad");
-	cali_begin_string_byname("region.name", "triad");
+	CALI_MARK_BEGIN("add-else");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j]+b[j];
+	CALI_MARK_END("add-else");
 #endif
 	times[2][k] = mysecond() - times[2][k];
 	
 	times[3][k] = mysecond();
 #ifdef TUNED
+	CALI_MARK_BEGIN("triad-if");
 	CALI_MARK_ITERATION_BEGIN("triad-iteration", k);
         tuned_STREAM_Triad(scalar);
 	CALI_MARK_ITERATION_END("triad-iteraion");
-	cali_end_byname("region.name");
-	CALI_MARK_END("triad");
+	CALI_MARK_END("triad-if");
 #else
+	CALI_MARK_BEGIN("triad-else");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    a[j] = b[j]+scalar*c[j];
+	CALI_MARK_END("triad-else");
 #endif
 	times[3][k] = mysecond() - times[3][k];
 	}
