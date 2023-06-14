@@ -1,36 +1,29 @@
 # Makefile for STREAM with Caliper and Variorum integration
+CC = mpicc
+CFLAGS = -O2 -fopenmp
 
-# Compiler Settings
-CC = gcc -std=c99
-CFLAGS = -O3 -Wall -fopenmp
+FC = gfortran
+FFLAGS = -O2 -fopenmp
 
-# Caliper Settings
-#CALIPER_PATH = /g/g15/jeter3/build-lassen/caliper
-#CALIPER_LIBS = -L$(CALIPER_PATH)/lib64 -lcaliper
-
-CALIPER_PATH = /g/g15/jeter3/build-lassen/caliper-no-variorum
+#CALIPER_PATH = /g/g15/jeter3/build-lassen/caliper-no-variorum
+CALIPER_PATH = /g/g15/jeter3/build-lassen/caliper
 CALIPER_LIBS = -L$(CALIPER_PATH)/lib64 -lcaliper
-
-OPENMPI_PATH = /g/g15/jeter3/build-lassen/spack/opt/spack/linux-rhel7-power9le/gcc-8.3.1/openmpi
-OPENMPI_LIBS = -L$(OPENMPI_PATH)/lib -lmpi
-
-# Variorum Settings
-#VARIORUM_PATH = /g/g15/jeter3/build-lassen/variorum
-#VARIORUM_LIBS = -L$(VARIORUM_PATH)/lib -lvariorum
-
-#VARIORUM_PATH = /g/g15/jeter3/variorum/
-#VARIORUM_LIBS = -L$(VARIORUM_PATH)/build/variorum/ -lvariorum
-
 CALIPER_INCLUDE = -I$(CALIPER_PATH)/include/caliper
-OPENMPI_INCLUDE = -I$(OPENMPI_PATH)/include
-#VARIORUM_INCLUDE = -I$(VARIORUM_PATH)/include
+LDFLAGS = $(CALIPER_LIBS)
 
-# Linking
-#LDFLAGS = $(CALIPER_LIBS) $(VARIORUM_LIBS) $(OPENMPI_LIBS)
-LDFLAGS = $(CALIPER_LIBS) $(OPENMPI_LIBS)
+all: stream_f.exe stream_c.exe
 
-all: stream
+stream_f.exe: stream.f mysecond.o
+	$(CC) $(CFLAGS) -c mysecond.c
+	$(FC) $(FFLAGS) -c stream.f
+	$(FC) $(FFLAGS) stream.o mysecond.o -o stream_f.exe
 
-# Targets
-stream: stream.c
-	$(CC) $(CFLAGS) $(CALIPER_INCLUDE) $(OPENMPI_INCLUDE) -o $@ $< $(LDFLAGS)
+stream_c.exe: stream.c
+	$(CC) $(CFLAGS) $(CALIPER_INCLUDE) -o $@ $< $(LDFLAGS)
+
+clean:
+	rm -f stream_f.exe stream_c.exe *.o
+
+# an example of a more complex build line for the Intel icc compiler
+stream.icc: stream.c
+	icc -O3 -xCORE-AVX2 -ffreestanding -qopenmp -DSTREAM_ARRAY_SIZE=80000000 -DNTIMES=20 stream.c -o stream.omp.AVX2.80M.20x.icc
