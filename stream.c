@@ -51,12 +51,7 @@
 # include <cali.h>
 # include <cali-manager.h>
 # include <cali_datatracker.h>
-//# include <Annotation.h>
 # include <cali-mpi.h>
-
-///*extern "C"{
-//# include <variorum.h>
-//}*/
 
 /*-----------------------------------------------------------------------
  * INSTRUCTIONS:
@@ -591,49 +586,33 @@ void checkSTREAMresults ()
 void tuned_STREAM_Copy()
 {
 	ssize_t j;
-	//CALI_MARK_BEGIN("copy");
-	//cali_begin_string_byname("region.name", "copy");
 #pragma omp parallel for
         for (j=0; j<STREAM_ARRAY_SIZE; j++)
             c[j] = a[j];
-	//cali_end_byname("region.name");
-	//CALI_MARK_END("copy");
 }
 
 void tuned_STREAM_Scale(STREAM_TYPE scalar)
 {
 	ssize_t j;
-	//CALI_MARK_BEGIN("scale");
-	//cali_begin_string_byname("region.name", "scale");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    b[j] = scalar*c[j];
-	//cali_end_byname("region.name");
-	//CALI_MARK_END("scale");
 }
 
 void tuned_STREAM_Add()
 {
 	ssize_t j;
-	//CALI_MARK_BEGIN("add");
-	//cali_begin_string_byname("region.name", "add");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    c[j] = a[j]+b[j];
-	//cali_end_byname("region.name");
-	//CALI_MARK_END("add");
 }
 
 void tuned_STREAM_Triad(STREAM_TYPE scalar)
 {
 	ssize_t j;
-	//CALI_MARK_BEGIN("triad");
-	//cali_begin_string_byname("region.name", "triad");
 #pragma omp parallel for
 	for (j=0; j<STREAM_ARRAY_SIZE; j++)
 	    a[j] = b[j]+scalar*c[j];
-	//cali_end_byname("region.name");
-	//CALI_MARK_END("triad");
 }
 /* end of stubs for the "tuned" versions of the kernels */
 #endif
